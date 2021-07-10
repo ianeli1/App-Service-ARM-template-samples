@@ -1,0 +1,71 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "Name": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the App Service"
+            }
+        },
+        "SKU": {
+            "type": "string",
+            "metadata": {
+                "description": "App Service Plan tier"
+            },
+            "allowedValues": [
+                "F1", "D1", "B1", "B2", "B3", "S1", "S2", "S3", "P1", "P2", "P3", "P1V2", "P2V2", "P3V2"
+            ],
+            "defaultValue": "B1"
+        },
+        "Instances": {
+            "type": "int",
+            "metadata": {
+                "description": "Amount of instances assigned to the App Service plan"
+            },
+            "minValue": 1,
+            "maxValue": 20,
+            "defaultValue": 1
+        }
+    },
+    "functions": [],
+    "variables": {
+        "ASPname": "[concat(parameters('Name'),'-', parameters('SKU'), '-ASP')]"
+    },
+    "resources": [
+        {
+            "name": "[variables('ASPname')]",
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2018-02-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "[parameters('SKU')]",
+                "capacity": "[parameters('Instances')]"
+            },
+            "tags": {
+                "displayName": "[variables('ASPname')]"
+            },
+            "properties": {
+                "name": "[variables('ASPname')]"
+            }
+        },
+        {
+            "name": "[parameters('Name')]",
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/',variables('ASPname'))]": "Resource",
+                "displayName":  "[parameters('Name')]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('ASPname'))]"
+            ],
+            "properties": {
+                "name":  "[parameters('Name')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('ASPname'))]"
+            }
+        }
+    ],
+    "outputs": {}
+}
